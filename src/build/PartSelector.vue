@@ -1,6 +1,6 @@
 <template>
-  <div class="part" :class="position">
-    <img :src="selectedPart.src" title="arm"/>
+  <div class="part" :class="position" >
+    <img @click="showPartInfo()" :src="selectedPart.src" title="arm"/>
     <button @click="selectPreviousPart()" class="prev-selector"></button>
     <button @click="selectNextPart()" class="next-selector"></button>
     <span class="sale" v-show="selectedPart.onSale">Sale!</span>
@@ -12,16 +12,24 @@ function getPreviousValidIndex(index, length) {
   const deprecatedIndex = index - 1;
   return deprecatedIndex < 0 ? length - 1 : deprecatedIndex;
 }
+
 function getNextValidIndex(index, length) {
   const incrementedIndex = index + 1;
   return incrementedIndex > length - 1 ? 0 : incrementedIndex;
 }
+
 export default {
   props: {
-    parts: { type: Array, required: true },
-    position: { type: String, required: true },
-    validator(value) {
-      return ['left', 'right', 'top', 'bottom', 'center'].includes(value);
+    parts: {
+      type: Array,
+      required: true,
+    },
+    position: {
+      type: String,
+      required: true,
+      validator(value) {
+        return ['left', 'right', 'top', 'bottom', 'center'].includes(value);
+      },
     },
   },
   data() {
@@ -33,9 +41,18 @@ export default {
     },
   },
   created() {
-    this.emitSelectedPart()
+    this.emitSelectedPart();
+  },
+  updated() {
+    this.emitSelectedPart();
   },
   methods: {
+    showPartInfo() {
+      this.$router.push({
+        name: 'Parts',
+        params: { id: this.selectedPart.id, partType: this.selectedPart.type },
+      });
+    },
     emitSelectedPart() {
       this.$emit('partSelected', this.selectedPart);
     },
@@ -44,17 +61,17 @@ export default {
         this.selectedPartIndex,
         this.parts.length,
       );
-      this.emitSelectedPart()
     },
     selectPreviousPart() {
       this.selectedPartIndex = getPreviousValidIndex(
         this.selectedPartIndex,
         this.parts.length,
       );
-      this.emitSelectedPart()
     },
+
   },
 };
+
 </script>
 
 <style scoped>
@@ -83,6 +100,7 @@ export default {
 }
 .part img {
   width:165px;
+  cursor:pointer;
 }
 .top {
   border-bottom: none;
@@ -119,7 +137,7 @@ export default {
   height: 171px;
 }
 .left .prev-selector:after,  .right .prev-selector:after{
-  content: '\25B2' !important
+  content: '\25B2'
 }
 .left .next-selector:after, .right .next-selector:after {
   content: '\25BC'
@@ -162,3 +180,4 @@ export default {
 .highlight {
   border: 1px solid red;
 }
+</style>
