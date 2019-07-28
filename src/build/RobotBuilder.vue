@@ -1,5 +1,5 @@
 <template>
-    <div class="content">
+    <div v-if="availableParts" class="content">
         <div class="preview">
           <CollapsibleSection>
           <div class="preview-content">
@@ -51,35 +51,19 @@
                      @partSelected="part => selectedRobot.base = part"
                     />
             </div>
-            <div>
-              <h1>Cart</h1>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Robot</th>
-                    <th class="cost">Cost</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(robot, index) in cart" :key="index">
-                      <td>{{robot.head.title}}</td>
-                      <td class="cost">{{robot.cost}}</td>
-                    </tr>
-                </tbody>
-              </table>
-            </div>
-    </div>
+          </div>
 </template>
 
-
 <script>
-import availableParts from '../data/parts';
 import createdHookMixin from './created-hook-mixin';
 import PartsSelector from './PartSelector.vue';
 import CollapsibleSection from '../shared/CollapsibleSection.vue';
 
 export default {
   name: 'RobotBuilder',
+  created() {
+    this.$store.dispatch('robots/getParts')
+  },
   beforeRouteLeave(to, from, next) {
     if (this.addedtToCart===true) {
       next(true);
@@ -91,9 +75,8 @@ export default {
   components: { PartsSelector, CollapsibleSection },
   data() {
     return {
-      addedtToCart: false,
+      addedToCart: false,
       cart: [],
-      availableParts,
       selectedRobot: {
         head: {},
         leftArm: {},
@@ -105,6 +88,10 @@ export default {
   },
   mixins: [createdHookMixin],
   computed: {
+    availableParts() {
+      return this.$store.state.robots.parts;
+    }
+    ,
     headBorderStyle() {
       return { border: this.selectedRobot.head.onSale ? '3px solid red' : '3px solid #aaa' };
     },
@@ -114,15 +101,17 @@ export default {
   },
   methods: {
     addToCart() {
+      console.log(this.selectedRobot,"this.selectedRobot")
       const robot = this.selectedRobot;
       const cost = robot.head.cost
       + robot.leftArm.cost
       + robot.rightArm.cost
       + robot.torso.cost
       + robot.base.cost;
-      console.log(cost, 'cost');
-      this.$store('addRobotToCart', Object.assign({}, robot, { cost }));
-      this.addedtToCart = true;
+      console.log(cost,"cost")
+      this.$store.dispatch('robots/addRobotToCart', Object.assign({}, robot, { cost }))
+      .then(()=> this.$router.push('/cart'));
+      this.addedToCart = true;
     },
   },
 };
@@ -237,14 +226,6 @@ export default {
   width:210px;
   padding:3px;
   font-size: 16px;
-}
-td, th {
-  text-align:left;
-  padding:5px;
-  padding-right:20px;
-}
-.cost {
-  text-align:right
 }
 .sale-border {
   border: 3px solid red
